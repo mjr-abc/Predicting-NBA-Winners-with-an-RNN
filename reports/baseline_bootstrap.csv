@@ -1,0 +1,4 @@
+comparison,log_loss_diff,ci_low,ci_high,significant
+Net ratings only - Home team (reference),-0.0546,-0.0654,-0.0432,True
+Static averages - Home team (reference),-0.0588,-0.0698,-0.0466,True
+Static averages - Net ratings only,-0.0042,-0.0077,-0.0009,True

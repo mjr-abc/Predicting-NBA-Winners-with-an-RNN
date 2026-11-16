@@ -1,0 +1,5 @@
+bin,games,mean_confidence,accuracy,share_home_picks
+toss-up (0.50-0.55),540,0.525,0.511,0.498
+lean (0.55-0.65),1024,0.6,0.601,0.649
+favourite (0.65-0.75),930,0.697,0.685,0.772
+strong (>0.75),727,0.817,0.796,0.886

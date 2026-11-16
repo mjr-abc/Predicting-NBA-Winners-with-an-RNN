@@ -1,0 +1,24 @@
+feature,coefficient
+net rating diff (pre-game),0.628
+away rest,-0.079
+home off + away def: ortg,0.079
+away off + home def: efg,-0.075
+away off + home def: par3,-0.066
+away off + home def: ortg,-0.065
+home off + away def: orb_pct,0.064
+home off + away def: tov_pct,-0.058
+away off + home def: tov_pct,0.057
+home off + away def: efg,0.057
+away opp_strength,-0.055
+away pace,0.054
+home rest,0.045
+away was_home,0.041
+home opp_strength,0.039
+home off + away def: ftr,0.037
+home was_home,-0.032
+home rest,0.031
+home off + away def: par3,0.029
+away off + home def: ftr,-0.027
+away off + home def: orb_pct,-0.014
+away rest,-0.011
+home pace,-0.004
