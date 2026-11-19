@@ -1,8 +1,8 @@
 """Baseline models, trained on the training seasons and evaluated on validation.
 
   Home team (reference)  always predicts the training home-win rate (chance level)
-  Net ratings only       logistic regression on the pre-game season-to-date
-                         net rating difference (strength only, no rest days)
+  Net ratings and rest   logistic regression on x: the pre-game season-to-date
+                         net rating difference and both teams' rest days
   Static averages        logistic regression on the 20 matchup features averaged
                          over the last m games + x (net rating difference, both rest days)
 
@@ -59,7 +59,7 @@ def static_features(d, m):
 def load(m):
     d = np.load(PROCESSED / f"sequences_m{M_MAX}.npz")
     feats = {
-        "net": d["x"][:, [0]],                                # net rating difference only
+        "net": d["x"],                                        # x: net rating difference + both rest days
         "static": static_features(d, m),                      # 20 averaged + 3 = 23 inputs
     }
     meta = pd.read_csv(PROCESSED / f"sequences_m{M_MAX}_meta.csv")
@@ -121,7 +121,7 @@ def calibration_plot(y, preds, path):
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
 
-    colors = {"Net ratings only": "#2a78d6", "Static averages": "#eb6834"}
+    colors = {"Net ratings and rest": "#2a78d6", "Static averages": "#eb6834"}
     edges = np.linspace(0, 1, 11)
     fig, ax = plt.subplots(figsize=(4.2, 4.0), dpi=200)
     ax.plot([0, 1], [0, 1], ls="--", lw=1, color="#9a9a96", label="perfect calibration")
@@ -146,7 +146,7 @@ def calibration_plot(y, preds, path):
 
 
 def sweep_m(d, y, tr, va, ms, p_net):
-    """Static-averages baseline for several m on the same games, compared with net ratings."""
+    """Static-averages baseline for several m on the same games, compared with net ratings and rest."""
     rows = []
     for m in ms:
         X = static_features(d, m)
@@ -154,11 +154,11 @@ def sweep_m(d, y, tr, va, ms, p_net):
         p = model.predict_proba(X[va])[:, 1]
         diff, lo, hi = bootstrap_diff(y[va], p, p_net)
         r = {"m": m, "C": c, **{f"val_{k}": v for k, v in scores(y[va], p).items()},
-             "diff_vs_net_ratings": diff, "ci_low": lo, "ci_high": hi,
+             "diff_vs_net_ratings_rest": diff, "ci_low": lo, "ci_high": hi,
              "significant": hi < 0 or lo > 0}
         rows.append(r)
         print(f"  m={m:<3} C={c:<6} val log-loss {r['val_log_loss']:.4f}  "
-              f"vs net ratings {diff:+.4f} [{lo:+.4f}, {hi:+.4f}]")
+              f"vs net ratings and rest {diff:+.4f} [{lo:+.4f}, {hi:+.4f}]")
     return pd.DataFrame(rows).round(4)
 
 
@@ -169,7 +169,7 @@ def sweep_plot(table, net_ll, path):
 
     fig, ax = plt.subplots(figsize=(4.2, 3.2), dpi=200)
     ax.axhline(net_ll, ls="--", lw=1, color="#9a9a96")
-    ax.text(table.m.max(), net_ll, " net ratings only", va="bottom", ha="right",
+    ax.text(table.m.max(), net_ll, " net ratings and rest", va="bottom", ha="right",
             fontsize=8, color="#5f5e5a")
     ax.plot(table.m, table.val_log_loss, lw=2, marker="o", ms=5, color="#eb6834")
     best = table.loc[table.val_log_loss.idxmin()]
@@ -205,8 +205,8 @@ def main():
         net_model, _ = fit_lr(feats["net"], y, tr, va, verbose=False)
         p_net = net_model.predict_proba(feats["net"][va])[:, 1]
         net_ll = log_loss(y[va], p_net)
-        print(f"Net ratings only: val log-loss {net_ll:.4f}")
-        print("Static averages (difference to net ratings with 95% bootstrap interval):")
+        print(f"Net ratings and rest: val log-loss {net_ll:.4f}")
+        print("Static averages (difference to net ratings and rest, 95% bootstrap interval):")
         table = sweep_m(d, y, tr, va, sorted(args.sweep), p_net)
         out = ROOT / "reports"
         out.mkdir(exist_ok=True)
@@ -227,7 +227,7 @@ def main():
 
     # 2) and 3) logistic regressions
     models = {}
-    for name, key in [("Net ratings only", "net"), ("Static averages", "static")]:
+    for name, key in [("Net ratings and rest", "net"), ("Static averages", "static")]:
         print(f"{name} ({feats[key].shape[1]} inputs)")
         model, c = fit_lr(feats[key], y, tr, va)
         models[name], chosen_c[name] = model, c
@@ -245,9 +245,9 @@ def main():
 
     yv = y[va]
     boot = []
-    for a, b in [("Net ratings only", "Home team (reference)"),
+    for a, b in [("Net ratings and rest", "Home team (reference)"),
                  ("Static averages", "Home team (reference)"),
-                 ("Static averages", "Net ratings only")]:
+                 ("Static averages", "Net ratings and rest")]:
         d, lo, hi = bootstrap_diff(yv, preds_va[a], preds_va[b])
         boot.append({"comparison": f"{a} - {b}", "log_loss_diff": d, "ci_low": lo, "ci_high": hi,
                      "significant": hi < 0 or lo > 0})
@@ -269,7 +269,7 @@ def main():
     for name, p in preds_va.items():
         pv[name] = p.round(4)
     pv.to_csv(out / "baseline_val_predictions.csv", index=False)
-    calibration_plot(yv, {k: preds_va[k] for k in ["Net ratings only", "Static averages"]},
+    calibration_plot(yv, {k: preds_va[k] for k in ["Net ratings and rest", "Static averages"]},
                      out / "figures" / "calibration_baselines.png")
 
     pd.set_option("display.width", 200)

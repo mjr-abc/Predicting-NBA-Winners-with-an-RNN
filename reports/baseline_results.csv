@@ -1,4 +1,4 @@
 model,C,train_log_loss,train_brier,train_accuracy,val_log_loss,val_brier,val_accuracy
 Home team (reference),,0.6736,0.2403,0.5986,0.6788,0.2429,0.5855
-Net ratings only,0.003,0.6017,0.2076,0.6692,0.6242,0.2172,0.6464
+Net ratings and rest,0.003,0.6008,0.2072,0.6706,0.6231,0.2168,0.6479
 Static averages,0.003,0.5983,0.2062,0.6756,0.62,0.2155,0.6541
